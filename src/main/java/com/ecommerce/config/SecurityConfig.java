@@ -39,7 +39,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, DaoAuthenticationProvider authenticationProvider) throws Exception {
         http.authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/home", "/products/**", "/categories/**", "/register", "/login", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
+                .requestMatchers("/", "/home", "/products/**", "/categories", "/categories/**", "/register", "/login", "/css/**", "/js/**", "/images/**", "/h2-console/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/seller/**").hasAnyRole("SELLER", "ADMIN")
                 .requestMatchers("/cart/**", "/orders/**", "/profile/**").hasAnyRole("USER", "ADMIN", "SELLER")
