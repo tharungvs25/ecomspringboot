@@ -34,10 +34,18 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        initializeRoles();
-        initializeAdminUser();
-        initializeCategories();
-        initializeProducts();
+        try {
+            // Initialize all data in proper order
+            initializeRoles();
+            initializeAdminUser();
+            initializeCategories();
+            initializeProducts();
+            
+            System.out.println("Data initialization completed successfully!");
+        } catch (Exception e) {
+            System.out.println("Data initialization skipped due to error: " + e.getMessage());
+            // Continue without failing the application startup
+        }
     }
 
     private void initializeRoles() {
@@ -99,17 +107,17 @@ public class DataInitializer implements CommandLineRunner {
 
             // Electronics
             if (electronics != null) {
-                Product laptop = new Product("Gaming Laptop", "High-performance gaming laptop with RTX graphics", new BigDecimal("1299.99"), 10);
+                Product laptop = new Product("Gaming Laptop", "High-performance gaming laptop with RTX graphics", new BigDecimal("107999.00"), 10);
                 laptop.setCategory(electronics);
                 laptop.setImageUrl("/images/laptop.jpg");
                 productRepository.save(laptop);
 
-                Product smartphone = new Product("Smartphone Pro", "Latest smartphone with advanced camera", new BigDecimal("899.99"), 25);
+                Product smartphone = new Product("Smartphone Pro", "Latest smartphone with advanced camera", new BigDecimal("74999.00"), 25);
                 smartphone.setCategory(electronics);
                 smartphone.setImageUrl("/images/smartphone.jpg");
                 productRepository.save(smartphone);
 
-                Product headphones = new Product("Wireless Headphones", "Premium wireless headphones with noise cancellation", new BigDecimal("199.99"), 50);
+                Product headphones = new Product("Wireless Headphones", "Premium wireless headphones with noise cancellation", new BigDecimal("16599.00"), 50);
                 headphones.setCategory(electronics);
                 headphones.setImageUrl("/images/headphones.jpg");
                 productRepository.save(headphones);
@@ -117,12 +125,12 @@ public class DataInitializer implements CommandLineRunner {
 
             // Clothing
             if (clothing != null) {
-                Product tshirt = new Product("Cotton T-Shirt", "Comfortable cotton t-shirt available in multiple colors", new BigDecimal("29.99"), 100);
+                Product tshirt = new Product("Cotton T-Shirt", "Comfortable cotton t-shirt available in multiple colors", new BigDecimal("2499.00"), 100);
                 tshirt.setCategory(clothing);
                 tshirt.setImageUrl("/images/tshirt.jpg");
                 productRepository.save(tshirt);
 
-                Product jeans = new Product("Classic Jeans", "Premium denim jeans with perfect fit", new BigDecimal("79.99"), 75);
+                Product jeans = new Product("Classic Jeans", "Premium denim jeans with perfect fit", new BigDecimal("6599.00"), 75);
                 jeans.setCategory(clothing);
                 jeans.setImageUrl("/images/jeans.jpg");
                 productRepository.save(jeans);
@@ -130,12 +138,12 @@ public class DataInitializer implements CommandLineRunner {
 
             // Books
             if (books != null) {
-                Product book1 = new Product("Spring Boot Guide", "Complete guide to Spring Boot development", new BigDecimal("49.99"), 30);
+                Product book1 = new Product("Spring Boot Guide", "Complete guide to Spring Boot development", new BigDecimal("4149.00"), 30);
                 book1.setCategory(books);
                 book1.setImageUrl("/images/springbook.jpg");
                 productRepository.save(book1);
 
-                Product book2 = new Product("Java Programming", "Comprehensive Java programming handbook", new BigDecimal("39.99"), 40);
+                Product book2 = new Product("Java Programming", "Comprehensive Java programming handbook", new BigDecimal("3319.00"), 40);
                 book2.setCategory(books);
                 book2.setImageUrl("/images/javabook.jpg");
                 productRepository.save(book2);

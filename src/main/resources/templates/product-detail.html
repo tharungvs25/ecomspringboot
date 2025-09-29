@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.name} + ' - E-Commerce'">Product - E-Commerce</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .product-image {
+            height: 400px;
+            object-fit: cover;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .price {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 2em;
+        }
+        .stock-badge {
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shopping-cart me-2"></i>E-Commerce
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/products">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/categories">Categories</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" href="/cart">
+                            <i class="fas fa-shopping-cart"></i> Cart
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" href="/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/products">Products</a></li>
+                <li class="breadcrumb-item" th:if="${product.category}">
+                    <a th:href="@{/categories/{id}(id=${product.category.id})}" th:text="${product.category.name}">Category</a>
+                </li>
+                <li class="breadcrumb-item active" th:text="${product.name}">Product</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <!-- Product Image -->
+            <div class="col-md-6">
+                <div class="d-flex align-items-center justify-content-center product-image">
+                    <i class="fas fa-image fa-5x text-muted" th:if="${product.imageUrl == null}"></i>
+                    <img th:if="${product.imageUrl != null}" th:src="${product.imageUrl}" 
+                         th:alt="${product.name}" class="img-fluid product-image">
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="col-md-6">
+                <h1 th:text="${product.name}">Product Name</h1>
+                
+                <div class="mb-3">
+                    <span class="badge bg-secondary" th:if="${product.category}" th:text="${product.category.name}">Category</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="price" th:text="'₹' + ${#numbers.formatDecimal(product.price, 0, 'COMMA', 2, 'POINT')}">₹0.00</span>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="badge stock-badge" 
+                          th:classappend="${product.stockQuantity > 0} ? 'bg-success' : 'bg-danger'"
+                          th:text="${product.stockQuantity > 0} ? (${product.stockQuantity} + ' in stock') : 'Out of stock'">
+                        In stock
+                    </span>
+                </div>
+                
+                <div class="mb-4">
+                    <p th:text="${product.description}">Product description</p>
+                </div>
+                
+                <!-- Add to Cart Form -->
+                <div class="mb-4" th:if="${product.stockQuantity > 0}">
+                    <form class="d-flex align-items-center">
+                        <div class="me-3">
+                            <label for="quantity" class="form-label">Quantity:</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   value="1" min="1" th:max="${product.stockQuantity}" style="width: 100px;">
+                        </div>
+                        <button type="button" class="btn btn-primary btn-lg" 
+                                onclick="addToCart(this)" th:data-product-id="${product.id}">
+                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="mb-4" th:unless="${product.stockQuantity > 0}">
+                    <button class="btn btn-secondary btn-lg" disabled>
+                        <i class="fas fa-times me-2"></i>Out of Stock
+                    </button>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <a href="/products" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Products
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="addToWishlist(this)" th:data-product-id="${product.id}">
+                        <i class="fas fa-heart me-1"></i>Add to Wishlist
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Product Information Tabs -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="description-tab" data-bs-toggle="tab" 
+                                data-bs-target="#description" type="button" role="tab">
+                            Description
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" 
+                                data-bs-target="#specifications" type="button" role="tab">
+                            Specifications
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" 
+                                data-bs-target="#reviews" type="button" role="tab">
+                            Reviews
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="productTabsContent">
+                    <div class="tab-pane fade show active" id="description" role="tabpanel">
+                        <div class="p-4">
+                            <p th:text="${product.description}">Detailed product description goes here.</p>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="specifications" role="tabpanel">
+                        <div class="p-4">
+                            <table class="table">
+                                <tr>
+                                    <td><strong>Category:</strong></td>
+                                    <td th:text="${product.category?.name ?: 'N/A'}">N/A</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Stock:</strong></td>
+                                    <td th:text="${product.stockQuantity}">0</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Added:</strong></td>
+                                    <td th:text="${#temporals.format(product.createdAt, 'MMM dd, yyyy')}">Date</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="reviews" role="tabpanel">
+                        <div class="p-4">
+                            <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+                            <button class="btn btn-outline-primary" sec:authorize="isAuthenticated()">
+                                <i class="fas fa-star me-1"></i>Write a Review
+                            </button>
+                            <p sec:authorize="!isAuthenticated()">
+                                <a href="/login">Login</a> to write a review.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>E-Commerce Store</h5>
+                    <p>Your one-stop shop for all your needs.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2025 E-Commerce. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function addToCart(button) {
+            const productId = button.getAttribute('data-product-id');
+            const quantity = document.getElementById('quantity').value;
+            
+            // Show loading state
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            button.disabled = true;
+            
+            // Make AJAX request to add to cart
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'productId=' + productId + '&quantity=' + quantity
+            })
+            .then(response => {
+                if (response.ok) {
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>Added to Cart!';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-success');
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-primary');
+                        button.disabled = false;
+                    }, 3000);
+                } else {
+                    throw new Error('Failed to add to cart');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Error';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-danger');
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-danger');
+                    button.classList.add('btn-primary');
+                    button.disabled = false;
+                }, 3000);
+            });
+        }
+        
+        function addToWishlist(button) {
+            // Placeholder for wishlist functionality
+            alert('Wishlist feature coming soon!');
+        }
+    </script>
+</body>
+</html>

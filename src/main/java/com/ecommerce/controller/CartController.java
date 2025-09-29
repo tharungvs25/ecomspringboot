@@ -12,9 +12,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/cart")
@@ -129,5 +133,66 @@ public class CartController {
         }
 
         return "redirect:/cart";
+    }
+
+    @PostMapping("/addAjax")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addToCartAjax(@RequestParam Long productId,
+                                                            @RequestParam(defaultValue = "1") int quantity,
+                                                            Authentication authentication) {
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (authentication == null) {
+            response.put("success", false);
+            response.put("message", "Please login to add items to cart");
+            response.put("redirectUrl", "/login");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        User user = userService.findByUsername(authentication.getName()).orElse(null);
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "User not found. Please login again.");
+            response.put("redirectUrl", "/login");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        Optional<Product> productOpt = productService.findById(productId);
+        if (!productOpt.isPresent()) {
+            response.put("success", false);
+            response.put("message", "Product not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        Product product = productOpt.get();
+        
+        if (!product.isActive()) {
+            response.put("success", false);
+            response.put("message", "Product is not available");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        
+        if (!productService.isInStock(product, quantity)) {
+            response.put("success", false);
+            response.put("message", "Not enough stock available");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        try {
+            cartService.addToCart(user, product, quantity);
+            response.put("success", true);
+            response.put("message", "Product added to cart successfully!");
+            
+            // Get updated cart count
+            int cartCount = cartService.getCartItems(user).size();
+            response.put("cartCount", cartCount);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error adding product to cart: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }
